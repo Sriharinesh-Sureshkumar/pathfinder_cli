@@ -1,0 +1,9 @@
+Metadata-Version: 2.4
+Name: pathfinder-cli
+Version: 0.1.0
+Summary: BFS, Dijkstra, and A* pathfinding from scratch on a weighted grid
+Author: Sriharinesh Sureshkumar
+License: MIT
+Requires-Python: >=3.10
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
