@@ -24,3 +24,10 @@ env/
 # Windows
 Thumbs.db
 desktop.ini
+
+# Node / frontend
+node_modules/
+.vite/
+
+# dev server logs
+*.log
