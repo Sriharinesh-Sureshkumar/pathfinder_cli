@@ -85,9 +85,17 @@ npm install
 
 ### CLI
 
+#### Basic usage
+
+Each algorithm can be run independently with the same `--start`/`--end` coordinates:
+
+```bash
+pathfinder --algo bfs --start 0,0 --end 19,19
+pathfinder --algo dijkstra --start 0,0 --end 19,19
+pathfinder --algo astar --start 0,0 --end 19,19
 ```
-pathfinder --algo astar --start 0,0 --end 9,9 --rows 10 --cols 10 --render
-```
+
+Example output (`--algo astar --start 0,0 --end 9,9 --rows 10 --cols 10 --render`):
 
 ```
 +-------------------+
@@ -113,16 +121,70 @@ Nodes expl : 71
 Query time : 0.000 s
 ```
 
-| Flag        | Description                                          | Default |
-|-------------|-------------------------------------------------------|---------|
-| `--algo`    | Algorithm to run: `bfs`, `dijkstra`, or `astar`        | required (unless `--all`) |
-| `--start`   | Start coordinate as `row,col`                          | required |
-| `--end`     | End coordinate as `row,col`                            | required |
-| `--rows`    | Number of grid rows                                    | `20` |
-| `--cols`    | Number of grid columns                                 | `20` |
-| `--seed`    | Random seed for grid generation                        | `42` |
-| `--render`  | Print the ASCII grid with the path highlighted         | off |
-| `--all`     | Run all 3 algorithms and print a comparison table       | off |
+#### Customizing the grid
+
+```bash
+pathfinder --algo astar --start 0,0 --end 49,49 --rows 50 --cols 50
+```
+
+`--rows` and `--cols` control the grid's dimensions — start and end coordinates must fall within them.
+
+#### Reproducible results with seeds
+
+```bash
+pathfinder --algo dijkstra --start 0,0 --end 24,33 --rows 25 --cols 35 --seed 42
+```
+
+The same `--seed` always generates the same grid, so anyone can reproduce your exact result by running the same command.
+
+#### Visualizing the path in your terminal
+
+```bash
+pathfinder --algo astar --start 0,0 --end 9,9 --rows 10 --cols 10 --render
+```
+
+`--render` prints the ASCII grid with the path traced through it — walls are `#`, terrain costs are digits, and start/end are `S`/`E` (see the example output under Basic usage above).
+
+#### Comparing all algorithms at once
+
+```bash
+pathfinder --all --start 0,0 --end 19,19
+```
+
+`--all` runs BFS, Dijkstra, and A* on the same grid and prints a side-by-side comparison table of cost, nodes explored, and time for each.
+
+Example output:
+
+```
+Grid: 20 × 20   Seed: 42   Query: (0,0) → (19,19)
+──────────────┬──────────┬───────────────┬──────────
+Algorithm     │ Cost     │ Nodes explored│ Time (s)
+──────────────┼──────────┼───────────────┼──────────
+BFS           │ 38.0     │ 330            │ 0.001
+Dijkstra      │ 69.0     │ 330            │ 0.001
+A*            │ 69.0     │ 330            │ 0.001
+──────────────┴──────────┴───────────────┴──────────
+Note: BFS cost = hop count. Dijkstra/A* cost = weighted terrain sum.
+```
+
+#### Seeing all available options
+
+```bash
+pathfinder --help
+```
+
+#### Full flag reference
+
+| Flag        | Required | Description                                          |
+|-------------|----------|-------------------------------------------------------|
+| `--algo`    | Yes (unless `--all`) | Algorithm to run: `bfs`, `dijkstra`, or `astar` |
+| `--start`   | Yes      | Start coordinate as `row,col`                          |
+| `--end`     | Yes      | End coordinate as `row,col`                            |
+| `--rows`    | No (default `20`) | Number of grid rows                              |
+| `--cols`    | No (default `20`) | Number of grid columns                           |
+| `--seed`    | No (default `42`)  | Random seed for grid generation                 |
+| `--render`  | No (default off)   | Print the ASCII grid with the path highlighted  |
+| `--all`     | No (default off)   | Run all 3 algorithms and print a comparison table |
 
 #### Benchmark
 
@@ -151,6 +213,38 @@ npm run dev
 ```
 
 Then open http://localhost:5173
+
+### Using it as a Python library
+
+Since `pathfinder-cli` is a pip package, its algorithms can also be imported and called directly instead of going through the CLI:
+
+```python
+from pathfinder.grid import Grid
+from pathfinder.generator import generate_grid
+from pathfinder.bfs import bfs
+from pathfinder.dijkstra import dijkstra
+from pathfinder.astar import astar
+
+grid = generate_grid(rows=20, cols=20, seed=42)
+result = astar(grid, start=(0, 0), end=(19, 19))
+
+print(result.path)
+print(result.cost)
+print(result.nodes_explored)
+```
+
+### CLI vs Web App — which should you use?
+
+|                              | CLI (`pip install pathfinder-cli`) | Web App |
+|------------------------------|-------------------------------------|---------|
+| Access                       | Terminal, after pip install         | Just open the URL |
+| Interface                    | Text output                         | Animated, visual |
+| Requires Python              | Yes                                  | No |
+| Usable as a Python library   | Yes                                  | No |
+| Custom grid editing          | No                                   | Yes (click-to-edit) |
+| Setup needed                 | pip install                          | None |
+
+Both use the exact same underlying algorithm code — see the architecture diagram under Tech Stack.
 
 ### How the algorithms work
 
