@@ -1,3 +1,6 @@
+import { useState } from 'react'
+import GridDisplay from './GridDisplay'
+
 const PRESETS = {
   openField: { rows: 20, cols: 30, seed: 123, wallProbability: 0.05 },
   maze: { rows: 25, cols: 35, seed: 999, wallProbability: 0.35 },
@@ -11,8 +14,23 @@ export default function ControlPanel({
   editMode,
   onToggleEdit,
   isRunning,
+  canShareLink,
+  onCopyLink,
+  customGrid,
+  start,
+  end,
+  onEditCellClick,
 }) {
+  const [copied, setCopied] = useState(false)
   const update = (patch) => onConfigChange({ ...config, ...patch })
+
+  const handleCopyLink = async () => {
+    const ok = await onCopyLink()
+    if (ok) {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    }
+  }
 
   const handlePreset = (key) => {
     onConfigChange({ ...config, ...PRESETS[key] })
@@ -135,9 +153,37 @@ export default function ControlPanel({
         </label>
       </div>
 
-      <button className="btn-run" onClick={onRun} disabled={isRunning} type="button">
-        {isRunning ? 'Running…' : 'Run Simulation'}
-      </button>
+      {editMode && customGrid && (
+        <div className="edit-preview">
+          <div className="edit-preview-header">Edit Mode — click cells to edit terrain</div>
+          <GridDisplay
+            grid={customGrid}
+            start={start}
+            end={end}
+            algoKey="edit"
+            editable
+            onCellClick={onEditCellClick}
+          />
+          <div className="edit-legend">
+            <span><kbd>Click</kbd>cycle open → wall → cost 2 → 3 → 4 → 5 → open</span>
+            <span><kbd>Shift+Click</kbd>set Source</span>
+            <span><kbd>Ctrl/Cmd+Click</kbd>set Destination</span>
+          </div>
+        </div>
+      )}
+
+      <div className="run-actions">
+        {canShareLink ? (
+          <button className="btn-secondary" onClick={handleCopyLink} type="button">
+            {copied ? 'Copied!' : 'Copy Share Link'}
+          </button>
+        ) : (
+          <span className="share-warning">Share link unavailable for custom grids</span>
+        )}
+        <button className="btn-run" onClick={onRun} disabled={isRunning} type="button">
+          {isRunning ? 'Running…' : 'Run Simulation'}
+        </button>
+      </div>
     </div>
   )
 }

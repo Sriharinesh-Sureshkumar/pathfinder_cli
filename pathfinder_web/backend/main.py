@@ -145,6 +145,13 @@ def run(request: RunRequest):
     end = (request.end[0], request.end[1])
 
     if request.custom_grid is not None:
+        if len(request.custom_grid) != request.rows or any(
+            len(row) != request.cols for row in request.custom_grid
+        ):
+            raise HTTPException(
+                status_code=400,
+                detail=f"custom_grid dimensions must match rows={request.rows}, cols={request.cols}",
+            )
         grid = grid_from_custom(request.rows, request.cols, request.custom_grid)
     else:
         grid = build_grid(request.rows, request.cols, request.seed, request.wall_probability)

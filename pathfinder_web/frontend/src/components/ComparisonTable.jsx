@@ -33,11 +33,16 @@ function winnerFor(results, row) {
   return bestAlgo
 }
 
-export default function ComparisonTable({ results }) {
+export default function ComparisonTable({ results, onReplayAll }) {
   if (!results) return null
 
   return (
     <div className="comparison-wrapper">
+      <div className="comparison-actions">
+        <button className="btn-secondary" onClick={onReplayAll} type="button">
+          Replay All 3
+        </button>
+      </div>
       <div className="comparison-table-scroll">
         <table className="comparison-table">
           <thead>

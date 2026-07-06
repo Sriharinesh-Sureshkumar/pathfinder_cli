@@ -30,6 +30,9 @@ export default function AlgoColumn({
   exploredCells,
   pathCells,
   revealedNodeCount,
+  heatmap,
+  isDone,
+  onReplay,
 }) {
   return (
     <div className={`algo-column algo-${algoKey}`}>
@@ -51,6 +54,7 @@ export default function AlgoColumn({
         exploredCells={exploredCells}
         pathCells={pathCells}
         algoKey={algoKey}
+        heatmap={heatmap}
       />
 
       <div className="stats-row">
@@ -59,6 +63,14 @@ export default function AlgoColumn({
         <StatsCard label="Execution Time" value={result ? `${result.elapsed_ms} ms` : '—'} />
         <StatsCard label="Memory Used" value={result ? `${result.memory_mb} MB` : '—'} />
       </div>
+
+      {isDone && result && result.path && (
+        <div className="replay-row">
+          <button className="btn-secondary btn-replay" onClick={onReplay} type="button">
+            Replay Path
+          </button>
+        </div>
+      )}
 
       <div className="algo-description">
         {DESCRIPTIONS[algoKey].map((line, i) => (

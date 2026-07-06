@@ -46,6 +46,28 @@
   --dijkstra-path: #4ade80;
   --astar-path: #a78bfa;
 
+  --bfs-path-overlay: rgba(96, 165, 250, 0.65);
+  --dijkstra-path-overlay: rgba(74, 222, 128, 0.65);
+  --astar-path-overlay: rgba(167, 139, 250, 0.65);
+
+  --bfs-heatmap-1: rgba(59, 130, 246, 0.12);
+  --bfs-heatmap-2: rgba(59, 130, 246, 0.28);
+  --bfs-heatmap-3: rgba(59, 130, 246, 0.44);
+  --bfs-heatmap-4: rgba(59, 130, 246, 0.62);
+  --bfs-heatmap-5: rgba(59, 130, 246, 0.82);
+
+  --dijkstra-heatmap-1: rgba(34, 197, 94, 0.12);
+  --dijkstra-heatmap-2: rgba(34, 197, 94, 0.28);
+  --dijkstra-heatmap-3: rgba(34, 197, 94, 0.44);
+  --dijkstra-heatmap-4: rgba(34, 197, 94, 0.62);
+  --dijkstra-heatmap-5: rgba(34, 197, 94, 0.82);
+
+  --astar-heatmap-1: rgba(139, 92, 246, 0.12);
+  --astar-heatmap-2: rgba(139, 92, 246, 0.28);
+  --astar-heatmap-3: rgba(139, 92, 246, 0.44);
+  --astar-heatmap-4: rgba(139, 92, 246, 0.62);
+  --astar-heatmap-5: rgba(139, 92, 246, 0.82);
+
   --font-primary: 'Inter', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 }
@@ -266,8 +288,22 @@ h1 {
   background: #ffffff;
 }
 
-.btn-run {
+.run-actions {
   margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  align-self: flex-end;
+}
+
+.share-warning {
+  font-size: 12px;
+  color: var(--text-secondary);
+  max-width: 160px;
+  line-height: 1.3;
+}
+
+.btn-run {
   background: var(--bfs-color);
   color: #ffffff;
   border: none;
@@ -276,7 +312,6 @@ h1 {
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  align-self: flex-end;
 }
 
 .btn-run:hover {
@@ -299,21 +334,45 @@ h1 {
 }
 
 /* Edit preview */
-.card {
-  background: var(--card);
+.edit-preview {
+  flex-basis: 100%;
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 16px;
-}
-
-.edit-preview {
-  margin-bottom: 20px;
 }
 
 .edit-preview-header {
   font-size: 13px;
   color: var(--text-secondary);
   margin-bottom: 10px;
+}
+
+.edit-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.edit-legend kbd {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-primary);
+  margin-right: 4px;
+}
+
+/* Heatmap toggle */
+.columns-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
 }
 
 /* Columns */
@@ -397,6 +456,7 @@ h1 {
 }
 
 .cell {
+  position: relative;
   aspect-ratio: 1 / 1;
   display: flex;
   align-items: center;
@@ -405,6 +465,17 @@ h1 {
   font-size: 9px;
   color: var(--text-secondary);
   background: var(--cell-cost-1);
+}
+
+.cell-label {
+  position: relative;
+  z-index: 2;
+}
+
+.cell-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
 }
 
 .cell-editable {
@@ -463,6 +534,44 @@ h1 {
   background: var(--astar-path);
 }
 
+.cell-heatmap-bfs-1 { background: var(--bfs-heatmap-1); }
+.cell-heatmap-bfs-2 { background: var(--bfs-heatmap-2); }
+.cell-heatmap-bfs-3 { background: var(--bfs-heatmap-3); }
+.cell-heatmap-bfs-4 { background: var(--bfs-heatmap-4); }
+.cell-heatmap-bfs-5 { background: var(--bfs-heatmap-5); }
+
+.cell-heatmap-dijkstra-1 { background: var(--dijkstra-heatmap-1); }
+.cell-heatmap-dijkstra-2 { background: var(--dijkstra-heatmap-2); }
+.cell-heatmap-dijkstra-3 { background: var(--dijkstra-heatmap-3); }
+.cell-heatmap-dijkstra-4 { background: var(--dijkstra-heatmap-4); }
+.cell-heatmap-dijkstra-5 { background: var(--dijkstra-heatmap-5); }
+
+.cell-heatmap-astar-1 { background: var(--astar-heatmap-1); }
+.cell-heatmap-astar-2 { background: var(--astar-heatmap-2); }
+.cell-heatmap-astar-3 { background: var(--astar-heatmap-3); }
+.cell-heatmap-astar-4 { background: var(--astar-heatmap-4); }
+.cell-heatmap-astar-5 { background: var(--astar-heatmap-5); }
+
+.cell-path-overlay-bfs {
+  background: var(--bfs-path-overlay);
+}
+.cell-path-overlay-dijkstra {
+  background: var(--dijkstra-path-overlay);
+}
+.cell-path-overlay-astar {
+  background: var(--astar-path-overlay);
+}
+
+.cell-explored-overlay-bfs {
+  background: var(--bfs-explored);
+}
+.cell-explored-overlay-dijkstra {
+  background: var(--dijkstra-explored);
+}
+.cell-explored-overlay-astar {
+  background: var(--astar-explored);
+}
+
 /* Stats */
 .stats-row {
   display: grid;
@@ -490,6 +599,16 @@ h1 {
   margin-top: 4px;
 }
 
+.replay-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-replay {
+  font-size: 12px;
+  padding: 6px 12px;
+}
+
 .algo-description {
   font-size: 13px;
   color: var(--text-secondary);
@@ -507,6 +626,12 @@ h1 {
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 20px;
+}
+
+.comparison-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
 }
 
 .comparison-table-scroll {

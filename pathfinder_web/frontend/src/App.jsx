@@ -2,12 +2,22 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import Header from './components/Header'
 import ControlPanel from './components/ControlPanel'
 import AlgoColumn from './components/AlgoColumn'
-import GridDisplay from './components/GridDisplay'
 import ComparisonTable from './components/ComparisonTable'
 
 const API_BASE = 'http://127.0.0.1:8000'
 const ALGOS = ['bfs', 'dijkstra', 'astar']
 const BASE_TICK_MS = 10
+const REPLAY_TICK_MS = 50
+const SHARE_PARAM_KEYS = [
+  'rows',
+  'cols',
+  'seed',
+  'startRow',
+  'startCol',
+  'endRow',
+  'endCol',
+  'wallProb',
+]
 
 const DEFAULT_CONFIG = {
   rows: 25,
@@ -31,17 +41,42 @@ function coordsToKeySet(coords) {
   return set
 }
 
+function cycleCellCost(cost) {
+  if (cost === 1) return 0
+  if (cost === 0) return 2
+  if (cost >= 2 && cost < 5) return cost + 1
+  return 1
+}
+
+function parseConfigFromSearch(search) {
+  const params = new URLSearchParams(search)
+  if (!SHARE_PARAM_KEYS.every((key) => params.has(key))) return null
+  return {
+    rows: Number(params.get('rows')),
+    cols: Number(params.get('cols')),
+    seed: Number(params.get('seed')),
+    startRow: Number(params.get('startRow')),
+    startCol: Number(params.get('startCol')),
+    endRow: Number(params.get('endRow')),
+    endCol: Number(params.get('endCol')),
+    wallProbability: Number(params.get('wallProb')),
+  }
+}
+
 export default function App() {
   const [theme, setTheme] = useState('dark')
   const [config, setConfig] = useState(DEFAULT_CONFIG)
   const [editMode, setEditMode] = useState(false)
   const [customGrid, setCustomGrid] = useState(null)
+  const [showHeatmap, setShowHeatmap] = useState(false)
   const [runData, setRunData] = useState(null)
   const [progress, setProgress] = useState(null)
+  const [replay, setReplay] = useState({ bfs: null, dijkstra: null, astar: null })
   const [isRunning, setIsRunning] = useState(false)
   const [error, setError] = useState(null)
   const [showAbout, setShowAbout] = useState(false)
   const intervalRef = useRef(null)
+  const replayIntervalsRef = useRef({})
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
@@ -55,29 +90,61 @@ export default function App() {
     })
   }, [editMode, config.rows, config.cols])
 
-  const handleEditCellClick = (r, c) => {
+  useEffect(() => {
+    return () => {
+      Object.values(replayIntervalsRef.current).forEach((id) => clearInterval(id))
+    }
+  }, [])
+
+  const handleEditCellClick = (r, c, event) => {
+    if (event && event.shiftKey) {
+      setConfig((cfg) => ({ ...cfg, startRow: r, startCol: c }))
+      return
+    }
+    if (event && (event.ctrlKey || event.metaKey)) {
+      setConfig((cfg) => ({ ...cfg, endRow: r, endCol: c }))
+      return
+    }
     setCustomGrid((prev) => {
       const next = prev.map((row) => row.slice())
-      next[r][c] = next[r][c] === 0 ? 1 : 0
+      next[r][c] = cycleCellCost(next[r][c])
       return next
     })
   }
 
-  const handleRun = async () => {
+  const updateShareUrl = (cfg) => {
+    const params = new URLSearchParams({
+      rows: cfg.rows,
+      cols: cfg.cols,
+      seed: cfg.seed,
+      startRow: cfg.startRow,
+      startCol: cfg.startCol,
+      endRow: cfg.endRow,
+      endCol: cfg.endCol,
+      wallProb: cfg.wallProbability,
+    })
+    const newUrl = `${window.location.pathname}?${params.toString()}`
+    window.history.pushState(null, '', newUrl)
+  }
+
+  const runSimulation = async (cfg, useEditMode, grid) => {
     if (intervalRef.current) clearInterval(intervalRef.current)
+    Object.values(replayIntervalsRef.current).forEach((id) => clearInterval(id))
+    replayIntervalsRef.current = {}
+    setReplay({ bfs: null, dijkstra: null, astar: null })
     setError(null)
     setIsRunning(false)
 
     const body = {
-      rows: config.rows,
-      cols: config.cols,
-      seed: config.seed,
-      start: [config.startRow, config.startCol],
-      end: [config.endRow, config.endCol],
-      wall_probability: config.wallProbability,
+      rows: cfg.rows,
+      cols: cfg.cols,
+      seed: cfg.seed,
+      start: [cfg.startRow, cfg.startCol],
+      end: [cfg.endRow, cfg.endCol],
+      wall_probability: cfg.wallProbability,
     }
-    if (editMode && customGrid) {
-      body.custom_grid = customGrid
+    if (useEditMode && grid) {
+      body.custom_grid = grid
     }
 
     try {
@@ -93,10 +160,34 @@ export default function App() {
       setRunData(data)
       setProgress({ bfs: makeProgress(), dijkstra: makeProgress(), astar: makeProgress() })
       setIsRunning(true)
+      updateShareUrl(cfg)
     } catch (e) {
       setError(e.message)
     }
   }
+
+  const handleRun = () => {
+    runSimulation(config, editMode, customGrid)
+  }
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href)
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  useEffect(() => {
+    const parsed = parseConfigFromSearch(window.location.search)
+    if (!parsed) return
+    const fullConfig = { ...DEFAULT_CONFIG, ...parsed }
+    setConfig(fullConfig)
+    runSimulation(fullConfig, false, null)
+    // Runs once on mount to honor any shareable URL params present at load time.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     if (!isRunning || !runData) return
@@ -147,26 +238,53 @@ export default function App() {
     return () => clearInterval(intervalRef.current)
   }, [isRunning, runData, config.speed])
 
+  const startReplay = (algo) => {
+    if (!runData || !progress || progress[algo].phase !== 'done') return
+    const path = runData[algo].path
+    if (!path || path.length === 0) return
+
+    if (replayIntervalsRef.current[algo]) clearInterval(replayIntervalsRef.current[algo])
+    setReplay((prev) => ({ ...prev, [algo]: 0 }))
+
+    replayIntervalsRef.current[algo] = setInterval(() => {
+      setReplay((prev) => {
+        const count = prev[algo] ?? 0
+        if (count >= path.length) {
+          clearInterval(replayIntervalsRef.current[algo])
+          return prev
+        }
+        return { ...prev, [algo]: count + 1 }
+      })
+    }, REPLAY_TICK_MS)
+  }
+
+  const replayAll = () => {
+    ALGOS.forEach((algo) => startReplay(algo))
+  }
+
   const columnData = useMemo(() => {
     if (!runData || !progress) return null
     const out = {}
     for (const algo of ALGOS) {
       const r = runData[algo]
       const p = progress[algo]
+      const replayCount = replay[algo]
+      const pathCount = replayCount != null ? replayCount : p.pathCount
       out[algo] = {
         exploredCells: coordsToKeySet(r.visited_order.slice(0, p.exploredCount)),
-        pathCells: r.path ? coordsToKeySet(r.path.slice(0, p.pathCount)) : new Set(),
+        pathCells: r.path ? coordsToKeySet(r.path.slice(0, pathCount)) : new Set(),
         revealedNodeCount: p.exploredCount,
         isDone: p.phase === 'done',
       }
     }
     return out
-  }, [runData, progress])
+  }, [runData, progress, replay])
 
   const allColumnsDone = progress ? ALGOS.every((algo) => progress[algo].phase === 'done') : false
 
   const start = [config.startRow, config.startCol]
   const end = [config.endRow, config.endCol]
+  const canShareLink = !(editMode && customGrid)
 
   return (
     <div className="app">
@@ -180,26 +298,32 @@ export default function App() {
           editMode={editMode}
           onToggleEdit={() => setEditMode((v) => !v)}
           isRunning={isRunning}
+          canShareLink={canShareLink}
+          onCopyLink={handleCopyLink}
+          customGrid={customGrid}
+          start={start}
+          end={end}
+          onEditCellClick={handleEditCellClick}
         />
 
         {error && <div className="error-banner">{error}</div>}
 
-        {editMode && customGrid && (
-          <div className="card edit-preview">
-            <div className="edit-preview-header">Edit Mode — click cells to toggle walls</div>
-            <GridDisplay
-              grid={customGrid}
-              start={start}
-              end={end}
-              algoKey="edit"
-              editable
-              onCellClick={handleEditCellClick}
-            />
-          </div>
-        )}
-
         {runData && columnData && (
           <>
+            <div className="columns-toolbar">
+              <label className="switch-label">
+                <span>Show Terrain Heatmap</span>
+                <span
+                  className={`switch ${showHeatmap ? 'switch-on' : ''}`}
+                  onClick={() => setShowHeatmap((v) => !v)}
+                  role="switch"
+                  aria-checked={showHeatmap}
+                >
+                  <span className="switch-knob" />
+                </span>
+              </label>
+            </div>
+
             <div className="columns">
               {ALGOS.map((algo) => (
                 <AlgoColumn
@@ -212,11 +336,14 @@ export default function App() {
                   exploredCells={columnData[algo].exploredCells}
                   pathCells={columnData[algo].pathCells}
                   revealedNodeCount={columnData[algo].revealedNodeCount}
+                  heatmap={showHeatmap}
+                  isDone={columnData[algo].isDone}
+                  onReplay={() => startReplay(algo)}
                 />
               ))}
             </div>
 
-            {allColumnsDone && <ComparisonTable results={runData} />}
+            {allColumnsDone && <ComparisonTable results={runData} onReplayAll={replayAll} />}
           </>
         )}
       </div>
