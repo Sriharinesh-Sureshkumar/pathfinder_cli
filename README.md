@@ -1,6 +1,7 @@
 # pathfinder-cli
 
 ![CI](https://github.com/Sriharinesh-Sureshkumar/pathfinder_cli/actions/workflows/ci.yml/badge.svg?branch=main)
+[![PyPI version](https://badge.fury.io/py/pathfinder-cli.svg)](https://pypi.org/project/pathfinder-cli/)
 
 BFS, Dijkstra, and A* pathfinding — implemented entirely from scratch, no graph libraries.
 
@@ -59,7 +60,13 @@ Same algorithm code powers both the CLI and the web app — single source of tru
 
 ## Installation
 
-### CLI
+### Install from PyPI (recommended)
+
+```
+pip install pathfinder-cli
+```
+
+### Install from source (for development)
 
 ```
 pip install -e .
@@ -324,7 +331,6 @@ Response: the generated `grid` plus one result object each for `bfs`, `dijkstra`
 ## Roadmap
 
 - [ ] C++ reimplementation of the same algorithms for performance comparison
-- [ ] PyPI package (`pip install pathfinder-cli`)
 - [ ] 8-directional movement with adjusted heuristic
 - [ ] Multi-agent simultaneous pathfinding
 - [ ] Network/graph mode (non-grid topologies)
