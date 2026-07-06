@@ -28,10 +28,6 @@ pathfinder-cli implements BFS, Dijkstra, and A* from scratch in Python on a weig
 - **Path replay** — isolate the final path from exploration noise, useful for explaining the result to someone else
 - **Shareable URLs** — grid config encoded in the URL, so a specific result is reproducible and linkable rather than a one-off screenshot
 
-## Screenshots
-
-![Demo](docs/demo-screenshot.png)
-
 ## Demo
 
 ### 🔗 [https://pathfinder-cli.vercel.app](https://pathfinder-cli.vercel.app)
