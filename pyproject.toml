@@ -11,15 +11,29 @@ exclude = ["pathfinder_web*"]
 name = "pathfinder-cli"
 version = "0.1.0"
 description = "BFS, Dijkstra, and A* pathfinding from scratch on a weighted grid"
+readme = "README.md"
 requires-python = ">=3.10"
 authors = [
     { name = "Sriharinesh Sureshkumar" }
 ]
 license = "MIT"
 dependencies = []
+keywords = ["pathfinding", "algorithms", "bfs", "dijkstra", "astar", "cli"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Environment :: Console",
+]
 
 [project.optional-dependencies]
 dev = ["pytest"]
 
 [project.scripts]
 pathfinder = "pathfinder.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/Sriharinesh-Sureshkumar/pathfinder_cli"
+Repository = "https://github.com/Sriharinesh-Sureshkumar/pathfinder_cli"
+"Live Demo" = "https://pathfinder-cli.vercel.app"
