@@ -333,14 +333,6 @@ Response: the generated `grid` plus one result object each for `bfs`, `dijkstra`
 - [ ] Multi-agent simultaneous pathfinding
 - [ ] Network/graph mode (non-grid topologies)
 
-## Contributing
-
-Issues and PRs are welcome. Please run the test suite before submitting (`pytest tests/ -v`), and follow the existing code style — stdlib only for `pathfinder/`, no new dependencies without discussion first.
-
-## License
-
-MIT
-
 ## Author
 
 **Sriharinesh Sureshkumar**
