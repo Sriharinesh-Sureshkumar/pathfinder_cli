@@ -28,6 +28,7 @@ desktop.ini
 # Node / frontend
 node_modules/
 .vite/
+pathfinder_web/frontend/.env
 
 # dev server logs
 *.log

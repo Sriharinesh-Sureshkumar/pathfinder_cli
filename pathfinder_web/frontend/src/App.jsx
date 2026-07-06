@@ -4,7 +4,7 @@ import ControlPanel from './components/ControlPanel'
 import AlgoColumn from './components/AlgoColumn'
 import ComparisonTable from './components/ComparisonTable'
 
-const API_BASE = 'http://127.0.0.1:8000'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
 const ALGOS = ['bfs', 'dijkstra', 'astar']
 const BASE_TICK_MS = 10
 const REPLAY_TICK_MS = 50
